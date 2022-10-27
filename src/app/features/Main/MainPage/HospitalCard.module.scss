@@ -1,0 +1,38 @@
+.main{
+    border: 1px solid black;
+    padding: 10px;
+}
+
+.title{
+    h1 {
+        font-size: 1.2rem;
+    }
+    h2 {
+        font-size: 1rem;
+        text-align: right;
+    }
+}
+
+.description{
+    display: flex;
+    flex-direction: row;
+    padding-bottom: 10px;
+    border-bottom: 1px solid gray;
+    > div {
+        border: 1px solid black;
+        padding: 5px 5px 5px 5px;
+        margin: 0px 5px 0px 5px;
+        &:global.enable{
+            background-color: grey;
+            color: white;
+        }
+    }
+}
+.information{
+    padding: 5px;
+    > div {
+        > span {
+            font-weight: bolder;
+        }
+    }
+}
