@@ -24,7 +24,7 @@ type FieldLegendProps = ComponentPropsWithoutRef<'legend'>;
 /**
  * @see {@link Question}
  */
-type QuestionContents = { Set: typeof QuestionSet };
+type QuestionContents = { Set: typeof QuestionSet; Field: typeof Field };
 type QuestionSetProps = ComponentPropsWithoutRef<'div'>;
 type QuestionProps = ComponentPropsWithoutRef<'label'>;
 
@@ -32,7 +32,10 @@ type QuestionProps = ComponentPropsWithoutRef<'label'>;
  * @see {@link Answer}
  */
 type AnswerContents = {
+  Field: typeof Field;
   Input: typeof Input;
+  Radio: typeof Radio;
+  CheckBox: typeof CheckBox;
   Select: typeof Select;
   TextArea: typeof TextArea;
   Label: typeof Label;
@@ -40,10 +43,12 @@ type AnswerContents = {
 };
 type SelectContents = { OptionGroup: typeof OptionGroup; Option: typeof Option };
 type InputContents = { DataList: typeof DataList };
-export type AnswerProps = ComponentPropsWithoutRef<'div'>;
-type InputProps = ComponentPropsWithoutRef<'input'>;
-type SelectProps = ComponentPropsWithoutRef<'select'>;
-type TextAreaProps = ComponentPropsWithoutRef<'textarea'>;
+type AnswerProps = ComponentPropsWithoutRef<'div'>;
+type InputProps = ComponentPropsWithoutRef<'input'> & Required<{ name: string }>;
+type RadioProps = InputProps & Required<{ name: string }>;
+type CheckBoxProps = InputProps & Required<{ name: string }>;
+type SelectProps = ComponentPropsWithoutRef<'select'> & Required<{ name: string }>;
+type TextAreaProps = ComponentPropsWithoutRef<'textarea'> & Required<{ name: string }>;
 type LabelProps = ComponentPropsWithoutRef<'label'>;
 type MessageProps = ComponentPropsWithoutRef<'div'> & {
   messages: Record<string, string>;
@@ -129,6 +134,7 @@ const FieldLegend: React.FC<FieldLegendProps> = ({ children, ...rest }) => {
  * @see {@link QuestionContents}
  * @example Question
  * @example Question.Set
+ * @example Question.Field
  */
 export const Question: React.FC<QuestionProps> & QuestionContents = ({
   children,
@@ -148,7 +154,10 @@ const QuestionSet: React.FC<QuestionSetProps> = ({ children, ...rest }) => {
 /**
  * @see {@link AnswerContents}
  * @example Answer
+ * @example Answer.Field
  * @example Answer.Input
+ * @example Answer.Radio
+ * @example Answer.CheckBox
  * @example Answer.Select
  * @example Answer.TextArea
  * @example Answer.Label
@@ -157,6 +166,12 @@ const QuestionSet: React.FC<QuestionSetProps> = ({ children, ...rest }) => {
 export const Answer: React.FC<AnswerProps> & AnswerContents = ({ children, ...rest }) => {
   return <div {...rest}>{children}</div>;
 };
+
+/**
+ * @see {@link InputContents}
+ * @example Input
+ * @example Input.DataList
+ */
 const Input: React.FC<InputProps> & InputContents = ({ onInvalid, ...rest }) => {
   const invalidHandler: FormEventHandler<HTMLInputElement> = e => {
     e.preventDefault();
@@ -164,6 +179,31 @@ const Input: React.FC<InputProps> & InputContents = ({ onInvalid, ...rest }) => 
   };
   return <input {...rest} onInvalid={invalidHandler} />;
 };
+
+const CheckBox: React.FC<CheckBoxProps> = ({ id, children, ...rest }) => {
+  return (
+    <Label htmlFor={id}>
+      <input {...rest} id={id} type="checkbox" />
+      {children}
+    </Label>
+  );
+};
+
+const Radio: React.FC<RadioProps> = ({ id, children, ...rest }) => {
+  return (
+    <Label htmlFor={id}>
+      <input {...rest} id={id} type="radio" />
+      {children}
+    </Label>
+  );
+};
+
+/**
+ * @see {@link SelectContents}
+ * @example Select
+ * @example Select.Option
+ * @example Select.OptionGroup
+ */
 const Select: React.FC<SelectProps> & SelectContents = ({ children, ...rest }) => {
   return <select {...rest}>{children}</select>;
 };
@@ -246,12 +286,16 @@ Field.Legend = FieldLegend;
  * @see {@link Question}
  */
 Question.Set = QuestionSet;
+Question.Field = Field;
 
 /**
  * @see {@link AnswerContents}
  * @see {@link Answer}
  */
+Answer.Field = Field;
 Answer.Input = Input;
+Answer.Radio = Radio;
+Answer.CheckBox = CheckBox;
 Answer.Select = Select;
 Answer.TextArea = TextArea;
 Answer.Message = Message;

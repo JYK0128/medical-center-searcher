@@ -1,26 +1,27 @@
-import React, { useEffect, useRef } from 'react';
-// eslint-disable-next-line unused-imports/no-unused-imports
-import styles from './HospitalMap.module.scss';
+import React, { ComponentPropsWithoutRef, useEffect, useRef } from 'react';
 
 export type MapGenerator = (mapOptions?: naver.maps.MapOptions) => naver.maps.Map;
-type HospitalMapProps = {
-  onLoad?: (mapGenerator: MapGenerator) => void;
-};
 
-export const HospitalMap: React.FC<HospitalMapProps> = props => {
-  const { onLoad } = props;
+type NaverMapProps = {
+  onLoad?: (mapGenerator: MapGenerator) => void;
+} & Omit<ComponentPropsWithoutRef<'div'>, 'onLoad'>;
+
+export const NaverMap: React.FC<NaverMapProps> = props => {
+  const { onLoad, id: componentId, ...rest } = props;
   const mapElementRef = useRef(null);
+  const id = componentId ?? 'map';
 
   useEffect(() => {
     const NAVER_MAP_API = process.env.REACT_APP_NAVER_MAP_API;
     const NAVER_API_CLIENT = process.env.REACT_APP_NAVER_API_CLIENT;
+
     const script = document.createElement('script');
     script.setAttribute('type', 'text/javascript');
     script.setAttribute('src', `${NAVER_MAP_API}${NAVER_API_CLIENT}`);
 
     script.onload = () => {
       const mapGenerator = (mapOptions?: naver.maps.MapOptions) =>
-        new naver.maps.Map('map', mapOptions ?? {});
+        new naver.maps.Map(id, mapOptions ?? {});
       if (onLoad) onLoad(mapGenerator);
     };
 
@@ -29,7 +30,7 @@ export const HospitalMap: React.FC<HospitalMapProps> = props => {
     return () => {
       document.body.removeChild(script);
     };
-  }, [mapElementRef, onLoad]);
+  }, [id, mapElementRef, onLoad]);
 
-  return <div id="map" className={styles.map} ref={mapElementRef} />;
+  return <div id={id} ref={mapElementRef} {...rest} />;
 };

@@ -1,21 +1,32 @@
-import React, { useState } from 'react';
+import React, { SyntheticEvent, useState } from 'react';
 import { Page, PageProps } from 'app/components/Page';
 import { Aside } from 'app/components/Division/Aside';
 import { hospitalSearchApi } from 'app/data/api/hospitalAPI';
 import { AppHeader } from 'app/features/Common/AppHeader';
+import { MapGenerator, NaverMap } from 'app/features/Common/NaverMap';
 import styles from './index.module.scss';
 import { HospitalCard } from './HospitalCard';
-import { HospitalMap, MapGenerator } from './HospitalMap';
+
 import { HospitalSearch } from './HospitalSearch';
 
 interface MainPageProps extends PageProps {}
 
 export const MainPage: React.FC<MainPageProps> = ({ ...rest }) => {
   const [pageNo, setPageNo] = useState(1);
-  const { data, error, isLoading } = hospitalSearchApi.useGetHmcListQuery({ pageNo });
+  const [hosNm, setHosNm] = useState('');
+  // TODO: 검색조건 추가
+  const { data, error, isLoading } = hospitalSearchApi.useGetHmcListQuery({
+    pageNo,
+    hmcNm: hosNm
+  });
 
   const handleNextPage = () => setPageNo(pageNo + 1);
   const handlePreviousPage = () => setPageNo(pageNo - 1);
+
+  // TODO: 검색조건 적용
+  const handleHospitalSearch = (e: SyntheticEvent<HTMLFormElement>) => {
+    const formData = new FormData(e.currentTarget);
+  };
 
   const onLoad = (mapGenerator: MapGenerator) => {
     const map = mapGenerator();
@@ -37,7 +48,7 @@ export const MainPage: React.FC<MainPageProps> = ({ ...rest }) => {
       <Page.Main>
         <Aside onClick={handlePreviousPage} className={styles['prevButton']} />
         {/* 페이지 prev 버튼 */}
-        <HospitalMap onLoad={onLoad} />
+        <NaverMap onLoad={onLoad} />
         <HospitalSearch />
         {error && <div>error</div>}
         {isLoading && <div>loading</div>} {/* TODO: suspending */}
