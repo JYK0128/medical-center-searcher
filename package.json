@@ -4,6 +4,8 @@
   "private": true,
   "dependencies": {
     "@reduxjs/toolkit": "^1.5.1",
+    "@tanstack/react-query": "^4.13.0",
+    "@tanstack/react-query-devtools": "^4.13.0",
     "canvas": "^2.9.0",
     "dompurify": "^2.3.5",
     "immer": "^9.0.6",

@@ -2,10 +2,10 @@ import React from 'react';
 import { Card } from 'app/components/Content/Card';
 import { Hint } from 'app/components/Content/Hint';
 import { Subject } from 'app/components/Content/Text';
-import { HospitalSearchInfoItem } from 'app/data/api/hospitalAPI';
+import { HospitalItemType } from 'app/data/api/hospitalAPI';
 import styles from './HospitalCard.module.scss';
 
-export const HospitalCard: React.FC<Partial<HospitalSearchInfoItem>> = props => {
+export const HospitalCard: React.FC<Partial<HospitalItemType>> = props => {
   const {
     hmcNm,
     hmcTelNo,
