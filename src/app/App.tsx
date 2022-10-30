@@ -33,5 +33,18 @@ export const App: React.FC = () => {
     </QueryClientProvider>
   );
 
-  return reactQuery();
+  const reactAll = () => (
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <QueryClientProvider client={queryClient}>
+          <HelmetProvider context={helmetContext}>
+            <Routers />
+            <ReactQueryDevtools initialIsOpen={false} />
+          </HelmetProvider>
+        </QueryClientProvider>
+      </PersistGate>
+    </Provider>
+  );
+
+  return reactAll();
 };

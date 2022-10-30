@@ -1,7 +1,7 @@
-import React, { SyntheticEvent, useState } from 'react';
+import React, { SyntheticEvent, useEffect, useState } from 'react';
 import { Page, PageProps } from 'app/components/Page';
 import { Aside } from 'app/components/Division/Aside';
-import { hospitalSearchApi } from 'app/data/api/hospitalAPI';
+import { hospitalSearchApi, hospitalSearchApiAxios } from 'app/data/api/hospitalAPI';
 import { AppHeader } from 'app/features/Common/AppHeader';
 import { MapGenerator, NaverMap } from 'app/features/Common/NaverMap';
 import styles from './index.module.scss';
@@ -19,6 +19,14 @@ export const MainPage: React.FC<MainPageProps> = ({ ...rest }) => {
     pageNo,
     hmcNm: hosNm
   });
+
+  useEffect(() => {
+    hospitalSearchApiAxios
+      .request({ method: 'GET', url: '/HmcSearchService/getHmcList', params: { pageNo } })
+      .then(response => console.log(response))
+      .catch(reason => console.log(reason))
+      .then(() => console.log('bye'));
+  }, [pageNo]);
 
   const handleNextPage = () => setPageNo(pageNo + 1);
   const handlePreviousPage = () => setPageNo(pageNo - 1);
@@ -46,7 +54,9 @@ export const MainPage: React.FC<MainPageProps> = ({ ...rest }) => {
         <AppHeader title="title" />
       </Page.Header>
       <Page.Main>
-        <Aside onClick={handlePreviousPage} className={styles['prevButton']} />
+        <Aside onClick={handlePreviousPage} className={styles['prevButton']}>
+          prev
+        </Aside>
         {/* 페이지 prev 버튼 */}
         <NaverMap onLoad={onLoad} />
         <HospitalSearch />
@@ -56,7 +66,9 @@ export const MainPage: React.FC<MainPageProps> = ({ ...rest }) => {
           Object.entries(data.entities).map(([, entity]) => (
             <HospitalCard key={entity?.hmcNo} {...entity} />
           ))}
-        <Aside onClick={handleNextPage} className={styles['nextButton']} />
+        <Aside onClick={handleNextPage} className={styles['nextButton']}>
+          next
+        </Aside>
         {/* 페이지 next 버튼 */}
       </Page.Main>
       <Page.Footer />

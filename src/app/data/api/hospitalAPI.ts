@@ -1,5 +1,6 @@
 import { EntityState, createEntityAdapter } from '@reduxjs/toolkit';
 import { FetchArgs, createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import axios from 'axios';
 import qs from 'qs';
 import { REHYDRATE } from 'redux-persist';
 import xml2js from 'xml2js';
@@ -26,15 +27,15 @@ const OPEN_API_RESULT_CODE = {
 } as const;
 
 /* 서비스 정보 - 파라미터 */
-const SEARCH_CHECKUP_PARAMS = { CHECKUP_TYPE_CODE: 'hchType' } as const;
-const SEARCH_HOSPITAL_WITH_REGION_PARAMS = {
+const HOSPITAL_SEARCH_CHECKUP_PARAMS = { CHECKUP_TYPE_CODE: 'hchType' } as const;
+const HOSPITAL_SEARCH_NAME_WITH_REGION_PARAMS = {
   HOSPITAL_NAME: 'hmcNm',
   SIDO_CODE: 'siDoCd',
   SI_GUNGU_CODE: 'siGunGuCd'
 } as const;
-const SEARCH_ALL_PARAMS = {
-  ...SEARCH_CHECKUP_PARAMS,
-  ...SEARCH_HOSPITAL_WITH_REGION_PARAMS,
+const HOSPITAL_SEARCH_ALL_PARAMS = {
+  ...HOSPITAL_SEARCH_CHECKUP_PARAMS,
+  ...HOSPITAL_SEARCH_NAME_WITH_REGION_PARAMS,
   HOSPITAL_ADDRESS: 'locAddr',
   CHECKUP_TYPE_CODE: 'hchType',
   HOSPITAL_TYPE_CODE: 'hmcRdatCd'
@@ -291,7 +292,7 @@ export const HOSPITAL_SERVICE = {
   METADATA: {
     NAME: 'hospital',
     API_KEY: process.env.REACT_APP_OPEN_DATA_API_KEY,
-    API_PATH: `http://openapi1.nhis.or.kr/openapi/service/rest/`
+    API_PATH: `http://openapi1.nhis.or.kr/openapi/service/rest`
   },
   API_SERVICE: {
     SEARCH_ALL: 'HmcSearchService/getHmcList',
@@ -311,10 +312,10 @@ export const HOSPITAL_SERVICE = {
     CODE_HOSPITAL_TYPE_LIST: 'CodeService/getMedicInstList'
   },
   API_PARAMS: {
-    SEARCH_ALL: SEARCH_ALL_PARAMS,
-    SEARCH_CHECKUP: SEARCH_CHECKUP_PARAMS,
-    SEARCH_REGION: SEARCH_HOSPITAL_WITH_REGION_PARAMS,
-    SEARCH_HOLIDAY: SEARCH_HOSPITAL_WITH_REGION_PARAMS,
+    SEARCH_ALL: HOSPITAL_SEARCH_ALL_PARAMS,
+    SEARCH_CHECKUP: HOSPITAL_SEARCH_CHECKUP_PARAMS,
+    SEARCH_REGION: HOSPITAL_SEARCH_NAME_WITH_REGION_PARAMS,
+    SEARCH_HOLIDAY: HOSPITAL_SEARCH_NAME_WITH_REGION_PARAMS,
 
     INFO_BASIC: HOSPITAL_INFO_PARAMS,
     INFO_RESERVATION: HOSPITAL_INFO_PARAMS,
@@ -380,13 +381,13 @@ type ResultInfoResponse = {
   resultMsg: string;
 };
 
-/** state */
+/* state */
 export const hospitalsAdapter = createEntityAdapter<HospitalItemType>({
   selectId: item => item.hmcNo,
   sortComparer: (a, b) => a.hmcNo.localeCompare(b.hmcNo)
 });
 
-/** api */
+/* api */
 export const hospitalSearchApi = createApi({
   reducerPath: HOSPITAL_SERVICE.METADATA.API_PATH,
   extractRehydrationInfo(action, { reducerPath }) {
@@ -439,3 +440,30 @@ export const hospitalSearchApi = createApi({
     })
   })
 });
+
+/* query */
+export const hospitalSearchApiAxios = axios.create({
+  method: 'GET',
+  baseURL: HOSPITAL_SERVICE.METADATA.API_PATH,
+  timeout: 4000,
+  paramsSerializer: {
+    serialize: params => {
+      return qs.stringify({
+        serviceKey: `${HOSPITAL_SERVICE.METADATA.API_KEY}`,
+        ...params
+      });
+    }
+  }
+});
+
+hospitalSearchApiAxios.interceptors.response.use(
+  response => {
+    if (response.headers['content-type']?.includes('text/xml'))
+      return Promise.reject(new Error('xml is not supported'));
+    if (response.data.response.header.resultCode !== OPEN_API_RESULT_CODE['NORMAL_CODE'])
+      return Promise.reject(new Error(response.data.response.header.resultMsg));
+
+    return response.data.response.body.items.item;
+  },
+  error => Promise.reject(error)
+);
