@@ -22,7 +22,8 @@ export const HospitalCard: React.FC<Partial<HospitalItemType>> = props => {
     cvxcaExmdChrgTypeCd
   } = props ?? {};
 
-  const isEnable = (value: string | undefined) => (value === '1' ? 'enable' : undefined);
+  const isEnable = (value: string | undefined) =>
+    value?.toString() === '1' ? 'enable' : undefined;
 
   return (
     <Card className={styles['main']}>

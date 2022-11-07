@@ -1,9 +1,10 @@
-import React, { SyntheticEvent, useEffect, useState } from 'react';
+import React, { SyntheticEvent, useState } from 'react';
 import { Page, PageProps } from 'app/components/Page';
 import { Aside } from 'app/components/Division/Aside';
-import { hospitalSearchApi, hospitalSearchApiAxios } from 'app/data/api/hospitalAPI';
 import { AppHeader } from 'app/features/Common/AppHeader';
 import { MapGenerator, NaverMap } from 'app/features/Common/NaverMap';
+import { useQuery } from '@tanstack/react-query';
+import { fetchHospitals } from 'app/data/api/hospitalAPI';
 import styles from './index.module.scss';
 import { HospitalCard } from './HospitalCard';
 
@@ -13,36 +14,30 @@ interface MainPageProps extends PageProps {}
 
 export const MainPage: React.FC<MainPageProps> = ({ ...rest }) => {
   const [pageNo, setPageNo] = useState(1);
-  const [hosNm, setHosNm] = useState('');
-  // TODO: 검색조건 추가
-  const { data, error, isLoading } = hospitalSearchApi.useGetHmcListQuery({
-    pageNo,
-    hmcNm: hosNm
-  });
+  const [hmcNm, setHmcNm] = useState('');
 
-  useEffect(() => {
-    hospitalSearchApiAxios
-      .request({ method: 'GET', url: '/HmcSearchService/getHmcList', params: { pageNo } })
-      .then(response => console.log(response))
-      .catch(reason => console.log(reason))
-      .then(() => console.log('bye'));
-  }, [pageNo]);
+  const { isLoading, data, isError } = useQuery(['searchHospitals', pageNo, hmcNm], () =>
+    fetchHospitals({ pageNo, hmcNm })
+  );
 
   const handleNextPage = () => setPageNo(pageNo + 1);
   const handlePreviousPage = () => setPageNo(pageNo - 1);
-
-  // TODO: 검색조건 적용
   const handleHospitalSearch = (e: SyntheticEvent<HTMLFormElement>) => {
     const formData = new FormData(e.currentTarget);
+    const name = formData.get('hmcNm');
+
+    if (typeof name === 'string') {
+      setHmcNm(name);
+    }
   };
 
   const onLoad = (mapGenerator: MapGenerator) => {
     const map = mapGenerator();
     if (data) {
-      Object.entries(data.entities).map(([, entity]) => {
-        if (!entity) return;
+      data.map(item => {
+        if (!item) return;
 
-        const position = new naver.maps.LatLng(Number(entity.cxVl), Number(entity.cyVl));
+        const position = new naver.maps.LatLng(Number(item.cxVl), Number(item.cyVl));
         return new naver.maps.Marker({ position, map });
       });
     }
@@ -57,19 +52,14 @@ export const MainPage: React.FC<MainPageProps> = ({ ...rest }) => {
         <Aside onClick={handlePreviousPage} className={styles['prevButton']}>
           prev
         </Aside>
-        {/* 페이지 prev 버튼 */}
-        <NaverMap onLoad={onLoad} />
-        <HospitalSearch />
-        {error && <div>error</div>}
-        {isLoading && <div>loading</div>} {/* TODO: suspending */}
-        {data &&
-          Object.entries(data.entities).map(([, entity]) => (
-            <HospitalCard key={entity?.hmcNo} {...entity} />
-          ))}
+        <NaverMap onLoad={onLoad} style={{ width: '100%', height: '300px' }} />
+        <HospitalSearch onSubmit={handleHospitalSearch} />
+        {isError && <div>error</div>}
+        {isLoading && <div>loading</div>}
+        {data && data.map(item => <HospitalCard key={item?.hmcNo} {...item} />)}
         <Aside onClick={handleNextPage} className={styles['nextButton']}>
           next
         </Aside>
-        {/* 페이지 next 버튼 */}
       </Page.Main>
       <Page.Footer />
     </Page>

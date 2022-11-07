@@ -20,7 +20,7 @@ export const HospitalSearch: React.FC<HospitalSearchProps> = props => {
         <Title>기본 검색</Title>
 
         <Question htmlFor="hosNmSearch">병원명</Question>
-        <Answer.Input type="search" id="hosNmSearch" name="hosNm" placeholder="병원명 입력" />
+        <Answer.Input type="search" id="hosNmSearch" name="hmcNm" placeholder="병원명 입력" />
       </Question.Set>
 
       <Question.Set>

@@ -1,9 +1,5 @@
-import { EntityState, createEntityAdapter } from '@reduxjs/toolkit';
-import { FetchArgs, createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import axios from 'axios';
 import qs from 'qs';
-import { REHYDRATE } from 'redux-persist';
-import xml2js from 'xml2js';
 
 /* 서비스 정보 - OPEN API */
 const OPEN_API_RESULT_CODE = {
@@ -291,10 +287,10 @@ const CODE_DEFAULT_TYPE_ITEM = { CODE: 'detailCode', NAME: 'detailCodeDesc' } as
 export const HOSPITAL_SERVICE = {
   METADATA: {
     NAME: 'hospital',
-    API_KEY: process.env.REACT_APP_OPEN_DATA_API_KEY,
-    API_PATH: `http://openapi1.nhis.or.kr/openapi/service/rest`
+    KEY: process.env.REACT_APP_OPEN_DATA_API_KEY,
+    PATH: `http://openapi1.nhis.or.kr/openapi/service/rest`
   },
-  API_SERVICE: {
+  SERVICE: {
     SEARCH_ALL: 'HmcSearchService/getHmcList',
     SEARCH_REGION: 'HmcSearchService/getRegnHmcList',
     SEARCH_CHECKUP: 'HmcSearchService/getHchkTypesHmcList',
@@ -311,7 +307,7 @@ export const HOSPITAL_SERVICE = {
     CODE_CHECKUP_TYPE_LIST: 'CodeService/getHchTypeList',
     CODE_HOSPITAL_TYPE_LIST: 'CodeService/getMedicInstList'
   },
-  API_PARAMS: {
+  PARAMS: {
     SEARCH_ALL: HOSPITAL_SEARCH_ALL_PARAMS,
     SEARCH_CHECKUP: HOSPITAL_SEARCH_CHECKUP_PARAMS,
     SEARCH_REGION: HOSPITAL_SEARCH_NAME_WITH_REGION_PARAMS,
@@ -328,7 +324,7 @@ export const HOSPITAL_SERVICE = {
     CODE_CHECKUP_TYPE_LIST: CODE_CHECKUP_TYPE_PARAMS,
     CODE_HOSPITAL_TYPE_LIST: CODE_HOSPITAL_TYPE_PARAMS
   },
-  API_ITEM: {
+  ITEM: {
     SEARCH_ALL: HOSPITAL_ITEM,
     SEARCH_REGION: HOSPITAL_ITEM,
     SEARCH_CHECKUP: HOSPITAL_ITEM,
@@ -362,108 +358,49 @@ type PagingRequestType = {
 };
 
 /** 타입정보 - 응답 */
-export type ResultCodeType = typeof OPEN_API_RESULT_CODE[keyof typeof OPEN_API_RESULT_CODE];
 export type HospitalItemType = Record<typeof HOSPITAL_ITEM[keyof typeof HOSPITAL_ITEM], string>;
-
-type HospitalSearchInfoResponse = {
-  header: ResultInfoResponse;
-  body: {
-    items: { item: [HospitalItemType] };
-  } & PagingResponse;
-};
-type PagingResponse = {
-  numOfRows: string;
-  pageNo: string;
-  totalCount: string;
-};
-type ResultInfoResponse = {
-  resultCode: ResultCodeType;
-  resultMsg: string;
-};
-
-/* state */
-export const hospitalsAdapter = createEntityAdapter<HospitalItemType>({
-  selectId: item => item.hmcNo,
-  sortComparer: (a, b) => a.hmcNo.localeCompare(b.hmcNo)
-});
+export type SiDoCodeType = Record<typeof CODE_SIDO_ITEM[keyof typeof CODE_SIDO_ITEM], string>;
+export type SiGunGuCodeType = Record<
+  typeof CODE_SI_GUNGU_ITEM[keyof typeof CODE_SI_GUNGU_ITEM],
+  string
+>;
 
 /* api */
-export const hospitalSearchApi = createApi({
-  reducerPath: HOSPITAL_SERVICE.METADATA.API_PATH,
-  extractRehydrationInfo(action, { reducerPath }) {
-    if (action.type === REHYDRATE) {
-      return action.payload[reducerPath];
-    }
-  },
-  tagTypes: ['Hospital'],
-  baseQuery: fetchBaseQuery({
-    baseUrl: HOSPITAL_SERVICE.METADATA.API_PATH,
-    paramsSerializer: params => {
-      return qs.stringify({
-        ServiceKey: HOSPITAL_SERVICE.METADATA.API_KEY,
-        ...params
-      });
-    }
-  }),
-  endpoints: builder => ({
-    getHmcList: builder.query<
-      EntityState<HospitalItemType>,
-      Partial<PagingRequestType & HospitalSearchRequestType> | void
-    >({
-      query: request =>
-        ({
-          url: HOSPITAL_SERVICE.API_SERVICE.SEARCH_ALL,
-          params: { ...request },
-          responseHandler: response => {
-            return response
-              .text()
-              .then(xml => xml2js.parseStringPromise(xml, { explicitArray: false }));
-          },
-          validateStatus: (_, result) => {
-            return result.response.header.resultCode === OPEN_API_RESULT_CODE['NORMAL_CODE'];
-          }
-        } as FetchArgs),
-      transformResponse: ({ response }: { response: HospitalSearchInfoResponse }) => {
-        return hospitalsAdapter.setAll(
-          hospitalsAdapter.getInitialState(),
-          response.body.items.item
-        );
-      },
-      providesTags: result => {
-        return result
-          ? [
-              { type: 'Hospital', id: 'LIST' },
-              ...result.ids.map(id => ({ type: 'Hospital' as const, id }))
-            ]
-          : [{ type: 'Hospital', id: 'LIST' }];
-      }
-    })
-  })
-});
-
-/* query */
-export const hospitalSearchApiAxios = axios.create({
+export const hospitalSearchAxiosApi = axios.create({
   method: 'GET',
-  baseURL: HOSPITAL_SERVICE.METADATA.API_PATH,
+  baseURL: HOSPITAL_SERVICE.METADATA.PATH,
   timeout: 4000,
   paramsSerializer: {
     serialize: params => {
       return qs.stringify({
-        serviceKey: `${HOSPITAL_SERVICE.METADATA.API_KEY}`,
+        serviceKey: `${HOSPITAL_SERVICE.METADATA.KEY}`,
         ...params
       });
     }
   }
 });
 
-hospitalSearchApiAxios.interceptors.response.use(
+hospitalSearchAxiosApi.interceptors.response.use(
   response => {
     if (response.headers['content-type']?.includes('text/xml'))
       return Promise.reject(new Error('xml is not supported'));
     if (response.data.response.header.resultCode !== OPEN_API_RESULT_CODE['NORMAL_CODE'])
-      return Promise.reject(new Error(response.data.response.header.resultMsg));
+      return Promise.reject(new Error(response.data.response.header.CodeResult));
 
     return response.data.response.body.items.item;
   },
   error => Promise.reject(error)
 );
+
+export const fetchHospitals = (
+  params?: Partial<HospitalSearchRequestType & PagingRequestType>
+): Promise<HospitalItemType[]> =>
+  hospitalSearchAxiosApi.get(HOSPITAL_SERVICE.SERVICE.SEARCH_ALL, { params });
+
+export const fetchSidoCode = (params?: Partial<PagingRequestType>): Promise<HospitalItemType[]> =>
+  hospitalSearchAxiosApi.get(HOSPITAL_SERVICE.SERVICE.CODE_SIDO_LIST, { params });
+
+export const fetchSiGunGuCode = (
+  params?: Partial<HospitalSearchRequestType & PagingRequestType>
+): Promise<HospitalItemType[]> =>
+  hospitalSearchAxiosApi.get(HOSPITAL_SERVICE.SERVICE.SEARCH_ALL, { params });
