@@ -27,7 +27,7 @@ const HOSPITAL_SEARCH_CHECKUP_PARAMS = { CHECKUP_TYPE_CODE: 'hchType' } as const
 const HOSPITAL_SEARCH_NAME_WITH_REGION_PARAMS = {
   HOSPITAL_NAME: 'hmcNm',
   SIDO_CODE: 'siDoCd',
-  SI_GUNGU_CODE: 'siGunGuCd'
+  SIGUNGU_CODE: 'siGunGuCd'
 } as const;
 const HOSPITAL_SEARCH_ALL_PARAMS = {
   ...HOSPITAL_SEARCH_CHECKUP_PARAMS,
@@ -40,10 +40,10 @@ const HOSPITAL_SEARCH_ALL_PARAMS = {
 const HOSPITAL_INFO_PARAMS = { HOSPITAL_ID: 'ykiho' } as const;
 
 const CODE_SIDO_PARAMS = { SIDO_CODE: 'siDoCd', SIDO_NAME: 'siDoNm' } as const;
-const CODE_SI_GUNGU_PARAMS = {
+const CODE_SIGUNGU_PARAMS = {
   SIDO_CODE: 'siDoCd',
-  SI_GUNGU_CODE: 'siGunGuCd',
-  SI_GUNDO_NAME: 'siGunGuNm'
+  SIGUNGU_CODE: 'siGunGuCd',
+  SIGUNGU_NAME: 'siGunGuNm'
 } as const;
 const CODE_CHECKUP_TYPE_PARAMS = { CHECKUP_TYPE_CODE: 'detailCd' } as const;
 const CODE_HOSPITAL_TYPE_PARAMS = { HOSPITAL_TYPE_CODE: 'detailCd' } as const;
@@ -60,7 +60,7 @@ const HOSPITAL_ITEM = {
   CHECKUP_CENTER_TEL_NUMBER: 'exmdrTelNo',
 
   HOSPITAL_SIDO_CODE: 'siDoCd',
-  HOSPITAL_SI_GUNGU_CODE: 'siGunGuCd',
+  HOSPITAL_SIGUNGU_CODE: 'siGunGuCd',
   HOSPITAL_ADDRESS: 'locAddr',
   HOSPITAL_POST_NUMBER: 'locPostNo',
 
@@ -303,7 +303,7 @@ export const HOSPITAL_SERVICE = {
     INFO_HOLIDAY: 'HmcSpecificInfoService/getHolidaysHchkInfoDetail',
 
     CODE_SIDO_LIST: 'CodeService/getSiDoList',
-    CODE_SI_GUNGU_LIST: 'CodeService/getSiGunGuList',
+    CODE_SIGUNGU_LIST: 'CodeService/getSiGunGuList',
     CODE_CHECKUP_TYPE_LIST: 'CodeService/getHchTypeList',
     CODE_HOSPITAL_TYPE_LIST: 'CodeService/getMedicInstList'
   },
@@ -319,8 +319,8 @@ export const HOSPITAL_SERVICE = {
     INFO_WORKHOUR: HOSPITAL_INFO_PARAMS,
     INFO_HOLIDAY: HOSPITAL_INFO_PARAMS,
 
-    CODE_SIDO_LIST: CODE_SIDO_PARAMS,
-    CODE_SI_GUNGU_LIST: CODE_SI_GUNGU_PARAMS,
+    CODE_SIDO: CODE_SIDO_PARAMS,
+    CODE_SIGUNGU: CODE_SIGUNGU_PARAMS,
     CODE_CHECKUP_TYPE_LIST: CODE_CHECKUP_TYPE_PARAMS,
     CODE_HOSPITAL_TYPE_LIST: CODE_HOSPITAL_TYPE_PARAMS
   },
@@ -346,11 +346,11 @@ export const HOSPITAL_SERVICE = {
 /** 타입정보 - 요청 */
 type HospitalSearchRequestType = {
   hmcNm: string;
-  siDoCd: number;
-  siGunGuCd: number;
-  locAddr: number;
-  hmcRdatCd: number;
-  hchType: number;
+  siDoCd: string;
+  siGunGuCd: string;
+  locAddr: string;
+  hmcRdatCd: string;
+  hchType: string;
 };
 type PagingRequestType = {
   numOfRows: number;
@@ -397,10 +397,14 @@ export const fetchHospitals = (
 ): Promise<HospitalItemType[]> =>
   hospitalSearchAxiosApi.get(HOSPITAL_SERVICE.SERVICE.SEARCH_ALL, { params });
 
-export const fetchSidoCode = (params?: Partial<PagingRequestType>): Promise<HospitalItemType[]> =>
-  hospitalSearchAxiosApi.get(HOSPITAL_SERVICE.SERVICE.CODE_SIDO_LIST, { params });
+export const fetchSidoList = (): Promise<SiDoCodeType[]> =>
+  hospitalSearchAxiosApi.get(HOSPITAL_SERVICE.SERVICE.CODE_SIDO_LIST, {
+    params: { numOfRows: 500 }
+  });
 
-export const fetchSiGunGuCode = (
-  params?: Partial<HospitalSearchRequestType & PagingRequestType>
-): Promise<HospitalItemType[]> =>
-  hospitalSearchAxiosApi.get(HOSPITAL_SERVICE.SERVICE.SEARCH_ALL, { params });
+export const fetchSiGunGuList = (
+  params: Partial<Pick<SiGunGuCodeType, 'siDoCd'>>
+): Promise<SiGunGuCodeType[]> =>
+  hospitalSearchAxiosApi.get(HOSPITAL_SERVICE.SERVICE.CODE_SIGUNGU_LIST, {
+    params: { ...params, numOfRows: 500 }
+  });

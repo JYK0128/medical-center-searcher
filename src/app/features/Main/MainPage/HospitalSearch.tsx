@@ -1,19 +1,60 @@
 import { Answer, Form, FormProps, Question } from 'app/components/Content/Form';
 import { Title } from 'app/components/Content/Title';
-import React from 'react';
+import { HOSPITAL_SERVICE, SiDoCodeType, SiGunGuCodeType } from 'app/data/api/hospitalAPI';
+import React, { SyntheticEvent } from 'react';
 
-type HospitalSearchProps = FormProps;
+type HospitalSearchProps = FormProps & {
+  siDoList: SiDoCodeType[] | undefined;
+  siGunGuList: SiGunGuCodeType[] | undefined;
+  onSelectSido: (e: SyntheticEvent<HTMLSelectElement>) => void;
+  onSelectSiGunGu?: (e: SyntheticEvent<HTMLSelectElement>) => void;
+};
 
 export const HospitalSearch: React.FC<HospitalSearchProps> = props => {
+  const { siDoList, siGunGuList, onSelectSido, onSelectSiGunGu, ...rest } = props;
+
+  // handler
+  const handleSido = (e: SyntheticEvent<HTMLSelectElement>) => {
+    onSelectSido(e);
+  };
+  const handleSiGunGu = (e: SyntheticEvent<HTMLSelectElement>) => {
+    if (onSelectSiGunGu) {
+      onSelectSiGunGu(e);
+    }
+  };
+
+  // rendering
   return (
-    <Form {...props}>
+    <Form {...rest}>
       <Question.Set>
         <Title>지역 선택*</Title>
 
         <Question htmlFor="sidoList">시/도 선택</Question>
-        <Answer.Select id="sidoList" name="siDoCd" />
+        <Answer.Select
+          id="sidoList"
+          name={HOSPITAL_SERVICE.PARAMS.CODE_SIDO.SIDO_CODE}
+          onChange={handleSido}
+        >
+          <Answer.Select.Option value="">시/도</Answer.Select.Option>
+          {siDoList?.map(sido => (
+            <Answer.Select.Option key={sido.siDoCd} value={sido.siDoCd}>
+              {sido.siDoNm}
+            </Answer.Select.Option>
+          ))}
+        </Answer.Select>
         <Question htmlFor="sigunguList">시/군/구 선택</Question>
-        <Answer.Select id="sigunguList" name="siGunGuCd" />
+        <Answer.Select
+          id="sigunguList"
+          name={HOSPITAL_SERVICE.PARAMS.CODE_SIGUNGU.SIGUNGU_CODE}
+          onSelect={handleSiGunGu}
+        >
+          <Answer.Select.Option value="">시/군/구</Answer.Select.Option>
+          {siGunGuList?.map(siGunGu => (
+            <Answer.Select.Option key={siGunGu.siGunGuCd} value={siGunGu.siGunGuCd}>
+              {siGunGu.siGunGuNm}
+            </Answer.Select.Option>
+          ))}
+        </Answer.Select>
       </Question.Set>
 
       <Question.Set>
