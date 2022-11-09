@@ -1,11 +1,18 @@
-import React from 'react';
+import React, { SyntheticEvent } from 'react';
 import { Card } from 'app/components/Content/Card';
 import { Hint } from 'app/components/Content/Hint';
 import { Subject } from 'app/components/Content/Text';
 import { HospitalItemType } from 'app/data/api/hospitalAPI';
+import { Button } from 'app/components/Content/Button';
+import { Wrapper } from 'app/components/Wrapper';
 import styles from './HospitalCard.module.scss';
 
-export const HospitalCard: React.FC<Partial<HospitalItemType>> = props => {
+type HospitalCardProps = Partial<HospitalItemType> & {
+  onClickDetail?: (e: SyntheticEvent<HTMLDivElement>) => void;
+  onClickReservation?: (e: SyntheticEvent<HTMLDivElement>) => void;
+};
+
+export const HospitalCard: React.FC<HospitalCardProps> = props => {
   const {
     hmcNm,
     hmcTelNo,
@@ -19,11 +26,25 @@ export const HospitalCard: React.FC<Partial<HospitalItemType>> = props => {
     lvcaExmdChrgTypeCd,
     ccExmdChrgTypeCd,
     bcExmdChrgTypeCd,
-    cvxcaExmdChrgTypeCd
+    cvxcaExmdChrgTypeCd,
+    onClickDetail,
+    onClickReservation
   } = props ?? {};
 
   const isEnable = (value: string | undefined) =>
     value?.toString() === '1' ? 'enable' : undefined;
+
+  const handleDetail = (e: SyntheticEvent<HTMLDivElement>) => {
+    if (onClickDetail) {
+      onClickDetail(e);
+    }
+  };
+
+  const handleReservation = (e: SyntheticEvent<HTMLDivElement>) => {
+    if (onClickReservation) {
+      onClickReservation(e);
+    }
+  };
 
   return (
     <Card className={styles['main']}>
@@ -60,6 +81,10 @@ export const HospitalCard: React.FC<Partial<HospitalItemType>> = props => {
             <a href={`fax:${exmdrFaxNo}`}>{exmdrFaxNo}</a>
           </div>
         )}
+        <Wrapper className={styles['button-wrapper']}>
+          <Button onClick={handleDetail}>상세정보</Button>
+          <Button onClick={handleReservation}>예약하기</Button>
+        </Wrapper>
       </Card.Description>
     </Card>
   );

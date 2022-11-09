@@ -1,6 +1,7 @@
 import axios from 'axios';
 import qs from 'qs';
-
+/* TODO: https://www.nhis.or.kr/nhis/healthin/retrieveExmdAdminSearch.do */
+/* TODO: https://www.nhis.or.kr/nhis/healthin/retrieveExmdAdminVltInfo.do */
 /* 서비스 정보 - OPEN API */
 const OPEN_API_RESULT_CODE = {
   NORMAL_CODE: '00',
@@ -23,7 +24,7 @@ const OPEN_API_RESULT_CODE = {
 } as const;
 
 /* 서비스 정보 - 파라미터 */
-const HOSPITAL_SEARCH_CHECKUP_PARAMS = { CHECKUP_TYPE_CODE: 'hchType' } as const;
+const HOSPITAL_SEARCH_CHECKUP_PARAMS = { CHECKUP_CODE: 'hchType' } as const;
 const HOSPITAL_SEARCH_NAME_WITH_REGION_PARAMS = {
   HOSPITAL_NAME: 'hmcNm',
   SIDO_CODE: 'siDoCd',
@@ -33,8 +34,8 @@ const HOSPITAL_SEARCH_ALL_PARAMS = {
   ...HOSPITAL_SEARCH_CHECKUP_PARAMS,
   ...HOSPITAL_SEARCH_NAME_WITH_REGION_PARAMS,
   HOSPITAL_ADDRESS: 'locAddr',
-  CHECKUP_TYPE_CODE: 'hchType',
-  HOSPITAL_TYPE_CODE: 'hmcRdatCd'
+  CHECKUP_CODE: 'hchType',
+  HOSPITAL_CODE: 'hmcRdatCd'
 } as const;
 
 const HOSPITAL_INFO_PARAMS = { HOSPITAL_ID: 'ykiho' } as const;
@@ -45,8 +46,8 @@ const CODE_SIGUNGU_PARAMS = {
   SIGUNGU_CODE: 'siGunGuCd',
   SIGUNGU_NAME: 'siGunGuNm'
 } as const;
-const CODE_CHECKUP_TYPE_PARAMS = { CHECKUP_TYPE_CODE: 'detailCd' } as const;
-const CODE_HOSPITAL_TYPE_PARAMS = { HOSPITAL_TYPE_CODE: 'detailCd' } as const;
+const CODE_CHECKUP_PARAMS = { CHECKUP_CODE: 'detailCd' } as const;
+const CODE_HOSPITAL_PARAMS = { HOSPITAL_CODE: 'detailCd' } as const;
 
 /* 서비스 정보 - 아이템 */
 const HOSPITAL_ITEM = {
@@ -304,8 +305,8 @@ export const HOSPITAL_SERVICE = {
 
     CODE_SIDO_LIST: 'CodeService/getSiDoList',
     CODE_SIGUNGU_LIST: 'CodeService/getSiGunGuList',
-    CODE_CHECKUP_TYPE_LIST: 'CodeService/getHchTypeList',
-    CODE_HOSPITAL_TYPE_LIST: 'CodeService/getMedicInstList'
+    CODE_CHECKUP_LIST: 'CodeService/getHchTypeList',
+    CODE_HOSPITAL_LIST: 'CodeService/getMedicInstList'
   },
   PARAMS: {
     SEARCH_ALL: HOSPITAL_SEARCH_ALL_PARAMS,
@@ -321,8 +322,8 @@ export const HOSPITAL_SERVICE = {
 
     CODE_SIDO: CODE_SIDO_PARAMS,
     CODE_SIGUNGU: CODE_SIGUNGU_PARAMS,
-    CODE_CHECKUP_TYPE_LIST: CODE_CHECKUP_TYPE_PARAMS,
-    CODE_HOSPITAL_TYPE_LIST: CODE_HOSPITAL_TYPE_PARAMS
+    CODE_CHECKUP_LIST: CODE_CHECKUP_PARAMS,
+    CODE_HOSPITAL_Type: CODE_HOSPITAL_PARAMS
   },
   ITEM: {
     SEARCH_ALL: HOSPITAL_ITEM,
@@ -338,24 +339,21 @@ export const HOSPITAL_SERVICE = {
 
     CODE_SIDO_LIST: CODE_SIDO_ITEM,
     CODE_SI_GUNGU_LIST: CODE_SI_GUNGU_ITEM,
-    CODE_CHECKUP_TYPE_LIST: CODE_DEFAULT_TYPE_ITEM,
-    CODE_HOSPITAL_TYPE_LIST: CODE_DEFAULT_TYPE_ITEM
+    CODE_CHECKUP_LIST: CODE_DEFAULT_TYPE_ITEM,
+    CODE_HOSPITAL_LIST: CODE_DEFAULT_TYPE_ITEM
   }
 } as const;
 
 /** 타입정보 - 요청 */
-type HospitalSearchRequestType = {
-  hmcNm: string;
-  siDoCd: string;
-  siGunGuCd: string;
-  locAddr: string;
-  hmcRdatCd: string;
-  hchType: string;
-};
+type HospitalSearchRequestType = Record<
+  typeof HOSPITAL_SEARCH_ALL_PARAMS[keyof typeof HOSPITAL_SEARCH_ALL_PARAMS],
+  string
+>;
 type PagingRequestType = {
   numOfRows: number;
   pageNo: number;
 };
+type SiGunGuRequestType = Pick<SiGunGuCodeType, 'siDoCd'>;
 
 /** 타입정보 - 응답 */
 export type HospitalItemType = Record<typeof HOSPITAL_ITEM[keyof typeof HOSPITAL_ITEM], string>;
@@ -364,9 +362,17 @@ export type SiGunGuCodeType = Record<
   typeof CODE_SI_GUNGU_ITEM[keyof typeof CODE_SI_GUNGU_ITEM],
   string
 >;
+export type HospitalCodeType = Record<
+  typeof CODE_DEFAULT_TYPE_ITEM[keyof typeof CODE_DEFAULT_TYPE_ITEM],
+  string
+>;
+export type CheckupCodeType = Record<
+  typeof CODE_DEFAULT_TYPE_ITEM[keyof typeof CODE_DEFAULT_TYPE_ITEM],
+  string
+>;
 
 /* api */
-export const hospitalSearchAxiosApi = axios.create({
+export const hospitalApi = axios.create({
   method: 'GET',
   baseURL: HOSPITAL_SERVICE.METADATA.PATH,
   timeout: 4000,
@@ -380,7 +386,7 @@ export const hospitalSearchAxiosApi = axios.create({
   }
 });
 
-hospitalSearchAxiosApi.interceptors.response.use(
+hospitalApi.interceptors.response.use(
   response => {
     if (response.headers['content-type']?.includes('text/xml'))
       return Promise.reject(new Error('xml is not supported'));
@@ -392,19 +398,37 @@ hospitalSearchAxiosApi.interceptors.response.use(
   error => Promise.reject(error)
 );
 
+// axios for react query
 export const fetchHospitals = (
   params?: Partial<HospitalSearchRequestType & PagingRequestType>
-): Promise<HospitalItemType[]> =>
-  hospitalSearchAxiosApi.get(HOSPITAL_SERVICE.SERVICE.SEARCH_ALL, { params });
-
-export const fetchSidoList = (): Promise<SiDoCodeType[]> =>
-  hospitalSearchAxiosApi.get(HOSPITAL_SERVICE.SERVICE.CODE_SIDO_LIST, {
+): Promise<HospitalItemType[]> => {
+  if (params) {
+    params = Object.fromEntries(Object.entries(params).filter(([, val]) => val !== ''));
+  }
+  return hospitalApi.get(HOSPITAL_SERVICE.SERVICE.SEARCH_ALL, { params });
+};
+export const fetchSidoList = (): Promise<SiDoCodeType[]> => {
+  return hospitalApi.get(HOSPITAL_SERVICE.SERVICE.CODE_SIDO_LIST, {
     params: { numOfRows: 500 }
   });
-
+};
 export const fetchSiGunGuList = (
-  params: Partial<Pick<SiGunGuCodeType, 'siDoCd'>>
-): Promise<SiGunGuCodeType[]> =>
-  hospitalSearchAxiosApi.get(HOSPITAL_SERVICE.SERVICE.CODE_SIGUNGU_LIST, {
+  params: Partial<SiGunGuRequestType>
+): Promise<SiGunGuCodeType[]> => {
+  if (params) {
+    params = Object.fromEntries(Object.entries(params).filter(([, val]) => val !== ''));
+  }
+  return hospitalApi.get(HOSPITAL_SERVICE.SERVICE.CODE_SIGUNGU_LIST, {
     params: { ...params, numOfRows: 500 }
   });
+};
+export const fetchHospitalTypeList = (): Promise<HospitalCodeType[]> => {
+  return hospitalApi.get(HOSPITAL_SERVICE.SERVICE.CODE_HOSPITAL_LIST, {
+    params: { numOfRows: 500 }
+  });
+};
+export const fetchCheckupTypeList = (): Promise<CheckupCodeType[]> => {
+  return hospitalApi.get(HOSPITAL_SERVICE.SERVICE.CODE_CHECKUP_LIST, {
+    params: { numOfRows: 500 }
+  });
+};

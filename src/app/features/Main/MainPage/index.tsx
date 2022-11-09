@@ -4,12 +4,18 @@ import { Aside } from 'app/components/Division/Aside';
 import { AppHeader } from 'app/features/Common/AppHeader';
 import { MapGenerator, NaverMap } from 'app/features/Common/NaverMap';
 import { useQuery } from '@tanstack/react-query';
-import { fetchHospitals, fetchSiGunGuList, fetchSidoList } from 'app/data/api/hospitalAPI';
+import {
+  HOSPITAL_SERVICE,
+  fetchCheckupTypeList,
+  fetchHospitalTypeList,
+  fetchHospitals,
+  fetchSiGunGuList,
+  fetchSidoList
+} from 'app/data/api/hospitalAPI';
 import styles from './index.module.scss';
 import { HospitalCard } from './HospitalCard';
 
 import { HospitalSearch } from './HospitalSearch';
-import { HOSPITAL_SERVICE } from '../../../data/api/hospitalAPI';
 
 interface MainPageProps extends PageProps {}
 
@@ -19,20 +25,24 @@ export const MainPage: React.FC<MainPageProps> = ({ ...rest }) => {
   const [siDoCd, setSiDoCd] = useState('');
   const [siDoCdTemp, setSiDoCdTemp] = useState('');
   const [siGunGuCd, setSiGunGuCd] = useState('');
+  const [hmcRdatCd, setHospitalType] = useState('');
+  const [hchType, setCheckupType] = useState('');
 
-  const fetchHospitalsQuery = useQuery(['fetchHospitals', pageNo, hmcNm, siDoCd, siGunGuCd], () =>
-    fetchHospitals({ pageNo, hmcNm, siDoCd, siGunGuCd })
+  /* query */
+  const fetchHospitalsQuery = useQuery(
+    ['fetchHospitals', pageNo, hmcNm, siDoCd, siGunGuCd, hmcRdatCd, hchType],
+    () => fetchHospitals({ pageNo, hmcNm, siDoCd, siGunGuCd, hmcRdatCd, hchType })
   );
   const fetchSiDoQuery = useQuery(['fetchSido'], () => fetchSidoList());
   const fetchSiGunGuQuery = useQuery(
     ['fetchSiGunGu', siDoCdTemp],
     () => fetchSiGunGuList({ siDoCd: siDoCdTemp }),
-    {
-      enabled: !!siDoCdTemp
-    }
+    { enabled: !!siDoCdTemp }
   );
+  const fetchHospitalTypeQuery = useQuery(['fetchHospitalType'], () => fetchHospitalTypeList());
+  const fetchCheckupTypeQuery = useQuery(['fetchCheckupType'], () => fetchCheckupTypeList());
 
-  // handler
+  /* handler */
   const handleNextPage = () => setPageNo(pageNo + 1);
   const handlePreviousPage = () => setPageNo(pageNo - 1);
   const handleHospitalSearch = (e: SyntheticEvent<HTMLFormElement>) => {
@@ -40,13 +50,22 @@ export const MainPage: React.FC<MainPageProps> = ({ ...rest }) => {
     const searchText = formData.get(HOSPITAL_SERVICE.PARAMS.SEARCH_ALL.HOSPITAL_NAME);
     const searchSiDo = formData.get(HOSPITAL_SERVICE.PARAMS.SEARCH_ALL.SIDO_CODE);
     const searchSiGunGu = formData.get(HOSPITAL_SERVICE.PARAMS.SEARCH_ALL.SIGUNGU_CODE);
+    const searchHospitalType = formData.get(HOSPITAL_SERVICE.PARAMS.SEARCH_ALL.HOSPITAL_CODE);
+    const searchCheckupType = formData.get(HOSPITAL_SERVICE.PARAMS.SEARCH_ALL.CHECKUP_CODE);
 
     if (typeof searchText === 'string') setHmcNm(searchText);
     if (typeof searchSiDo === 'string') setSiDoCd(searchSiDo);
     if (typeof searchSiGunGu === 'string') setSiGunGuCd(searchSiGunGu);
+    if (typeof searchHospitalType === 'string') setHospitalType(searchHospitalType);
+    if (typeof searchCheckupType === 'string') setCheckupType(searchCheckupType);
   };
   const handleOnLoad = (mapGenerator: MapGenerator) => {
-    const map = mapGenerator();
+    const map = mapGenerator({
+      zoomControl: true,
+      zoomControlOptions: {
+        position: naver.maps.Position.TOP_RIGHT
+      }
+    });
     if (fetchHospitalsQuery.data) {
       fetchHospitalsQuery.data.map(item => {
         if (!item) return;
@@ -60,7 +79,7 @@ export const MainPage: React.FC<MainPageProps> = ({ ...rest }) => {
     setSiDoCdTemp(e.currentTarget.value);
   };
 
-  // render
+  /* render */
   return (
     <Page {...rest} className={styles['page']}>
       <Page.Header>
@@ -76,6 +95,8 @@ export const MainPage: React.FC<MainPageProps> = ({ ...rest }) => {
           onSelectSido={handleSidoList}
           siDoList={fetchSiDoQuery.data}
           siGunGuList={fetchSiGunGuQuery.data}
+          hospitalTypeList={fetchHospitalTypeQuery.data}
+          checkupTypeList={fetchCheckupTypeQuery.data}
         />
         {fetchHospitalsQuery.isError && <div>error</div>}
         {fetchHospitalsQuery.isLoading && <div>loading</div>}
