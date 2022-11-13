@@ -12,8 +12,8 @@ import React, { SyntheticEvent } from 'react';
 type HospitalSearchProps = FormProps & {
   siDoList: SiDoCodeType[] | undefined;
   siGunGuList: SiGunGuCodeType[] | undefined;
-  onSelectSido: (e: SyntheticEvent<HTMLSelectElement>) => void;
-  onSelectSiGunGu?: (e: SyntheticEvent<HTMLSelectElement>) => void;
+  onSelectSido: React.ReactEventHandler<HTMLSelectElement>;
+  onSelectSiGunGu?: React.ReactEventHandler<HTMLSelectElement>;
 
   hospitalTypeList: HospitalCodeType[] | undefined;
   checkupTypeList: CheckupCodeType[] | undefined;

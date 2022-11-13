@@ -7,10 +7,12 @@ import { Button } from 'app/components/Content/Button';
 import { Wrapper } from 'app/components/Wrapper';
 import styles from './HospitalCard.module.scss';
 
-type HospitalCardProps = Partial<HospitalItemType> & {
-  onClickDetail?: (e: SyntheticEvent<HTMLDivElement>) => void;
-  onClickReservation?: (e: SyntheticEvent<HTMLDivElement>) => void;
-};
+type HospitalCardProps = Partial<
+  HospitalItemType & {
+    onClickDetail: React.ReactEventHandler<HTMLDivElement>;
+    onClickReservation: React.ReactEventHandler<HTMLDivElement>;
+  }
+>;
 
 export const HospitalCard: React.FC<HospitalCardProps> = props => {
   const {

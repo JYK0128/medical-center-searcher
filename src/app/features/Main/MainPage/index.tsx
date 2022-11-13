@@ -27,11 +27,12 @@ export const MainPage: React.FC<MainPageProps> = ({ ...rest }) => {
   const [siGunGuCd, setSiGunGuCd] = useState('');
   const [hmcRdatCd, setHospitalType] = useState('');
   const [hchType, setCheckupType] = useState('');
+  const [locAddr, setHospitalAddress] = useState('');
 
   /* query */
   const fetchHospitalsQuery = useQuery(
-    ['fetchHospitals', pageNo, hmcNm, siDoCd, siGunGuCd, hmcRdatCd, hchType],
-    () => fetchHospitals({ pageNo, hmcNm, siDoCd, siGunGuCd, hmcRdatCd, hchType })
+    ['fetchHospitals', pageNo, hmcNm, siDoCd, siGunGuCd, hmcRdatCd, hchType, locAddr],
+    () => fetchHospitals({ pageNo, hmcNm, siDoCd, siGunGuCd, hmcRdatCd, hchType, locAddr })
   );
   const fetchSiDoQuery = useQuery(['fetchSido'], () => fetchSidoList());
   const fetchSiGunGuQuery = useQuery(
@@ -52,12 +53,14 @@ export const MainPage: React.FC<MainPageProps> = ({ ...rest }) => {
     const searchSiGunGu = formData.get(HOSPITAL_SERVICE.PARAMS.SEARCH_ALL.SIGUNGU_CODE);
     const searchHospitalType = formData.get(HOSPITAL_SERVICE.PARAMS.SEARCH_ALL.HOSPITAL_CODE);
     const searchCheckupType = formData.get(HOSPITAL_SERVICE.PARAMS.SEARCH_ALL.CHECKUP_CODE);
+    const searchHospitalAddress = formData.get(HOSPITAL_SERVICE.PARAMS.SEARCH_ALL.HOSPITAL_ADDRESS);
 
     if (typeof searchText === 'string') setHmcNm(searchText);
     if (typeof searchSiDo === 'string') setSiDoCd(searchSiDo);
     if (typeof searchSiGunGu === 'string') setSiGunGuCd(searchSiGunGu);
     if (typeof searchHospitalType === 'string') setHospitalType(searchHospitalType);
     if (typeof searchCheckupType === 'string') setCheckupType(searchCheckupType);
+    if (typeof searchHospitalAddress === 'string') setHospitalAddress(searchHospitalAddress);
   };
   const handleOnLoad = (mapGenerator: MapGenerator) => {
     const map = mapGenerator({
@@ -67,7 +70,7 @@ export const MainPage: React.FC<MainPageProps> = ({ ...rest }) => {
       }
     });
     if (fetchHospitalsQuery.data) {
-      fetchHospitalsQuery.data.map(item => {
+      fetchHospitalsQuery.data.data.map(item => {
         if (!item) return;
 
         const position = new naver.maps.LatLng(Number(item.cxVl), Number(item.cyVl));
@@ -101,7 +104,7 @@ export const MainPage: React.FC<MainPageProps> = ({ ...rest }) => {
         {fetchHospitalsQuery.isError && <div>error</div>}
         {fetchHospitalsQuery.isLoading && <div>loading</div>}
         {fetchHospitalsQuery.data &&
-          fetchHospitalsQuery.data.map(item => <HospitalCard key={item.hmcNo} {...item} />)}
+          fetchHospitalsQuery.data.data.map(item => <HospitalCard key={item.hmcNo} {...item} />)}
         <Aside onClick={handleNextPage} className={styles['nextButton']}>
           next
         </Aside>

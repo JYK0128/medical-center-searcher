@@ -356,6 +356,14 @@ type PagingRequestType = {
 type SiGunGuRequestType = Pick<SiGunGuCodeType, 'siDoCd'>;
 
 /** 타입정보 - 응답 */
+type PagingResponseType = PagingRequestType & {
+  totalCount: number;
+};
+type PaginationResponse<T> = {
+  data: T;
+  page: PagingResponseType;
+};
+
 export type HospitalItemType = Record<typeof HOSPITAL_ITEM[keyof typeof HOSPITAL_ITEM], string>;
 export type SiDoCodeType = Record<typeof CODE_SIDO_ITEM[keyof typeof CODE_SIDO_ITEM], string>;
 export type SiGunGuCodeType = Record<
@@ -383,17 +391,56 @@ export const hospitalApi = axios.create({
         ...params
       });
     }
-  }
+  },
+
+  // xmlResponse transition
+  responseType: 'json',
+  // json transition option
+  transitional: {
+    silentJSONParsing: false,
+    forcedJSONParsing: false,
+    clarifyTimeoutError: true
+  },
+  // xmlResponse -> axiosResponse
+  transformResponse: [
+    data => {
+      return JSON.parse(data);
+    }
+  ]
 });
 
+// axiosResponse interceptors
 hospitalApi.interceptors.response.use(
   response => {
-    if (response.headers['content-type']?.includes('text/xml'))
-      return Promise.reject(new Error('xml is not supported'));
-    if (response.data.response.header.resultCode !== OPEN_API_RESULT_CODE['NORMAL_CODE'])
+    if (response.headers['content-type']?.includes('text/xml')) {
+      return Promise.reject(new Error('no json transition'));
+    }
+    if (response.data.response.header.resultCode !== OPEN_API_RESULT_CODE['NORMAL_CODE']) {
       return Promise.reject(new Error(response.data.response.header.CodeResult));
+    }
+    if (!response.data.response.body.items) {
+      return Promise.reject(new Error('no items'));
+    }
 
-    return response.data.response.body.items.item;
+    if (Array.isArray(response.data.response.body.items.item)) {
+      return {
+        data: response.data.response.body.items.item,
+        page: {
+          numOfRows: response.data.response.body.numOfRows,
+          pageNo: response.data.response.body.pageNo,
+          totalCount: response.data.response.body.totalCount
+        }
+      } as any;
+    } else {
+      return {
+        data: [response.data.response.body.items.item],
+        page: {
+          numOfRows: response.data.response.body.numOfRows,
+          pageNo: response.data.response.body.pageNo,
+          totalCount: response.data.response.body.totalCount
+        }
+      } as any;
+    }
   },
   error => Promise.reject(error)
 );
@@ -401,34 +448,37 @@ hospitalApi.interceptors.response.use(
 // axios for react query
 export const fetchHospitals = (
   params?: Partial<HospitalSearchRequestType & PagingRequestType>
-): Promise<HospitalItemType[]> => {
+): Promise<PaginationResponse<HospitalItemType[]>> => {
   if (params) {
     params = Object.fromEntries(Object.entries(params).filter(([, val]) => val !== ''));
   }
   return hospitalApi.get(HOSPITAL_SERVICE.SERVICE.SEARCH_ALL, { params });
 };
 export const fetchSidoList = (): Promise<SiDoCodeType[]> => {
-  return hospitalApi.get(HOSPITAL_SERVICE.SERVICE.CODE_SIDO_LIST, {
-    params: { numOfRows: 500 }
-  });
+  return hospitalApi
+    .get(HOSPITAL_SERVICE.SERVICE.CODE_SIDO_LIST, {
+      params: { numOfRows: 500 }
+    })
+    .then(res => res.data);
 };
-export const fetchSiGunGuList = (
-  params: Partial<SiGunGuRequestType>
-): Promise<SiGunGuCodeType[]> => {
-  if (params) {
-    params = Object.fromEntries(Object.entries(params).filter(([, val]) => val !== ''));
-  }
-  return hospitalApi.get(HOSPITAL_SERVICE.SERVICE.CODE_SIGUNGU_LIST, {
-    params: { ...params, numOfRows: 500 }
-  });
+export const fetchSiGunGuList = (params: SiGunGuRequestType): Promise<SiGunGuCodeType[]> => {
+  return hospitalApi
+    .get(HOSPITAL_SERVICE.SERVICE.CODE_SIGUNGU_LIST, {
+      params: { ...params, numOfRows: 500 }
+    })
+    .then(res => res.data);
 };
 export const fetchHospitalTypeList = (): Promise<HospitalCodeType[]> => {
-  return hospitalApi.get(HOSPITAL_SERVICE.SERVICE.CODE_HOSPITAL_LIST, {
-    params: { numOfRows: 500 }
-  });
+  return hospitalApi
+    .get(HOSPITAL_SERVICE.SERVICE.CODE_HOSPITAL_LIST, {
+      params: { numOfRows: 500 }
+    })
+    .then(res => res.data);
 };
 export const fetchCheckupTypeList = (): Promise<CheckupCodeType[]> => {
-  return hospitalApi.get(HOSPITAL_SERVICE.SERVICE.CODE_CHECKUP_LIST, {
-    params: { numOfRows: 500 }
-  });
+  return hospitalApi
+    .get(HOSPITAL_SERVICE.SERVICE.CODE_CHECKUP_LIST, {
+      params: { numOfRows: 500 }
+    })
+    .then(res => res.data);
 };

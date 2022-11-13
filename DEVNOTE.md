@@ -48,10 +48,10 @@
 4) bootstraping-icon
 
 
-# 22.11.10 개발내역
-1) (예정) pagination 방안 탐색
+# 22.11.14 개발내역
+1) pagination 방안 탐색
   - axios interaction에서 페이징정보 저장하기
-  - next button => paging 초과 시 대응
+  - (예정) next button => paging 초과 시 대응
 
 2) (예정) REACT HELMET -> SEO Lib.
 
