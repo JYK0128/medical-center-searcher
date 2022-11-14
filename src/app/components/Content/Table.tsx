@@ -6,6 +6,8 @@ type TableContents = {
   Head: typeof TableHead;
   Body: typeof TableBody;
   Foot: typeof TableFoot;
+  Row: typeof TableRow;
+  Data: typeof TableData;
 };
 type TableRowContents = {
   Header: typeof TableHeader;
@@ -66,6 +68,8 @@ Table.Meta = TableMeta;
 Table.Head = TableHead;
 Table.Body = TableBody;
 Table.Foot = TableFoot;
+Table.Row = TableRow;
+Table.Data = TableData;
 
 TableRow.Header = TableHeader;
 TableRow.Data = TableData;

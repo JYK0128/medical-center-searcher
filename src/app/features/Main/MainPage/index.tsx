@@ -12,10 +12,11 @@ import {
   fetchSiGunGuList,
   fetchSidoList
 } from 'app/data/api/hospitalAPI';
+import { useNavigate } from 'react-router-dom';
 import styles from './index.module.scss';
-import { HospitalCard } from './HospitalCard';
 
 import { HospitalSearch } from './HospitalSearch';
+import { HospitalCard } from './HospitalCard';
 
 interface MainPageProps extends PageProps {}
 
@@ -29,11 +30,15 @@ export const MainPage: React.FC<MainPageProps> = ({ ...rest }) => {
   const [hchType, setCheckupType] = useState('');
   const [locAddr, setHospitalAddress] = useState('');
 
+  // router
+  const navigate = useNavigate();
+
   /* query */
   const fetchHospitalsQuery = useQuery(
     ['fetchHospitals', pageNo, hmcNm, siDoCd, siGunGuCd, hmcRdatCd, hchType, locAddr],
     () => fetchHospitals({ pageNo, hmcNm, siDoCd, siGunGuCd, hmcRdatCd, hchType, locAddr })
   );
+
   const fetchSiDoQuery = useQuery(['fetchSido'], () => fetchSidoList());
   const fetchSiGunGuQuery = useQuery(
     ['fetchSiGunGu', siDoCdTemp],
@@ -44,8 +49,17 @@ export const MainPage: React.FC<MainPageProps> = ({ ...rest }) => {
   const fetchCheckupTypeQuery = useQuery(['fetchCheckupType'], () => fetchCheckupTypeList());
 
   /* handler */
-  const handleNextPage = () => setPageNo(pageNo + 1);
-  const handlePreviousPage = () => setPageNo(pageNo - 1);
+  const handleNextPage = () => {
+    if (fetchHospitalsQuery.data?.page) {
+      const { numOfRows, totalCount } = fetchHospitalsQuery.data.page;
+      if (Math.trunc(totalCount / numOfRows + 1) > pageNo) setPageNo(pageNo + 1);
+    }
+  };
+  const handlePreviousPage = () => {
+    if (fetchHospitalsQuery.data?.page) {
+      if (pageNo > 1) setPageNo(pageNo - 1);
+    }
+  };
   const handleHospitalSearch = (e: SyntheticEvent<HTMLFormElement>) => {
     const formData = new FormData(e.currentTarget);
     const searchText = formData.get(HOSPITAL_SERVICE.PARAMS.SEARCH_ALL.HOSPITAL_NAME);
@@ -70,7 +84,7 @@ export const MainPage: React.FC<MainPageProps> = ({ ...rest }) => {
       }
     });
     if (fetchHospitalsQuery.data) {
-      fetchHospitalsQuery.data.data.map(item => {
+      fetchHospitalsQuery.data.result.map(item => {
         if (!item) return;
 
         const position = new naver.maps.LatLng(Number(item.cxVl), Number(item.cyVl));
@@ -80,6 +94,12 @@ export const MainPage: React.FC<MainPageProps> = ({ ...rest }) => {
   };
   const handleSidoList = (e: SyntheticEvent<HTMLSelectElement>) => {
     setSiDoCdTemp(e.currentTarget.value);
+  };
+  const handleDetail = (e: SyntheticEvent<HTMLDivElement>) => {
+    navigate(`hospital/${e.currentTarget.id}`);
+  };
+  const handleReservation = (e: SyntheticEvent<HTMLDivElement>) => {
+    navigate(`reservation/${e.currentTarget.id}`);
   };
 
   /* render */
@@ -104,7 +124,14 @@ export const MainPage: React.FC<MainPageProps> = ({ ...rest }) => {
         {fetchHospitalsQuery.isError && <div>error</div>}
         {fetchHospitalsQuery.isLoading && <div>loading</div>}
         {fetchHospitalsQuery.data &&
-          fetchHospitalsQuery.data.data.map(item => <HospitalCard key={item.hmcNo} {...item} />)}
+          fetchHospitalsQuery.data.result.map(item => (
+            <HospitalCard
+              key={item.hmcNo}
+              {...item}
+              handleDetail={handleDetail}
+              handleReservation={handleReservation}
+            />
+          ))}
         <Aside onClick={handleNextPage} className={styles['nextButton']}>
           next
         </Aside>

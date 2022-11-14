@@ -1,4 +1,4 @@
-import React, { SyntheticEvent } from 'react';
+import React from 'react';
 import { Card } from 'app/components/Content/Card';
 import { Hint } from 'app/components/Content/Hint';
 import { Subject } from 'app/components/Content/Text';
@@ -7,12 +7,10 @@ import { Button } from 'app/components/Content/Button';
 import { Wrapper } from 'app/components/Wrapper';
 import styles from './HospitalCard.module.scss';
 
-type HospitalCardProps = Partial<
-  HospitalItemType & {
-    onClickDetail: React.ReactEventHandler<HTMLDivElement>;
-    onClickReservation: React.ReactEventHandler<HTMLDivElement>;
-  }
->;
+type HospitalCardProps = Partial<HospitalItemType> & {
+  handleDetail: React.ReactEventHandler<HTMLDivElement>;
+  handleReservation: React.ReactEventHandler<HTMLDivElement>;
+};
 
 export const HospitalCard: React.FC<HospitalCardProps> = props => {
   const {
@@ -29,24 +27,12 @@ export const HospitalCard: React.FC<HospitalCardProps> = props => {
     ccExmdChrgTypeCd,
     bcExmdChrgTypeCd,
     cvxcaExmdChrgTypeCd,
-    onClickDetail,
-    onClickReservation
-  } = props ?? {};
+    handleDetail,
+    handleReservation
+  } = props;
 
   const isEnable = (value: string | undefined) =>
     value?.toString() === '1' ? 'enable' : undefined;
-
-  const handleDetail = (e: SyntheticEvent<HTMLDivElement>) => {
-    if (onClickDetail) {
-      onClickDetail(e);
-    }
-  };
-
-  const handleReservation = (e: SyntheticEvent<HTMLDivElement>) => {
-    if (onClickReservation) {
-      onClickReservation(e);
-    }
-  };
 
   return (
     <Card className={styles['main']}>
@@ -84,8 +70,12 @@ export const HospitalCard: React.FC<HospitalCardProps> = props => {
           </div>
         )}
         <Wrapper className={styles['button-wrapper']}>
-          <Button onClick={handleDetail}>상세정보</Button>
-          <Button onClick={handleReservation}>예약하기</Button>
+          <Button id={hmcNm} onClick={handleDetail}>
+            상세정보
+          </Button>
+          <Button id={hmcNm} onClick={handleReservation}>
+            예약하기
+          </Button>
         </Wrapper>
       </Card.Description>
     </Card>

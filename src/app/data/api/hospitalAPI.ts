@@ -360,7 +360,7 @@ type PagingResponseType = PagingRequestType & {
   totalCount: number;
 };
 type PaginationResponse<T> = {
-  data: T;
+  result: T;
   page: PagingResponseType;
 };
 
@@ -402,11 +402,7 @@ export const hospitalApi = axios.create({
     clarifyTimeoutError: true
   },
   // xmlResponse -> axiosResponse
-  transformResponse: [
-    data => {
-      return JSON.parse(data);
-    }
-  ]
+  transformResponse: [data => JSON.parse(data)]
 });
 
 // axiosResponse interceptors
@@ -423,62 +419,77 @@ hospitalApi.interceptors.response.use(
     }
 
     if (Array.isArray(response.data.response.body.items.item)) {
-      return {
-        data: response.data.response.body.items.item,
+      response.data = {
+        result: response.data.response.body.items.item,
         page: {
           numOfRows: response.data.response.body.numOfRows,
           pageNo: response.data.response.body.pageNo,
           totalCount: response.data.response.body.totalCount
         }
-      } as any;
+      };
     } else {
-      return {
-        data: [response.data.response.body.items.item],
+      response.data = {
+        result: [response.data.response.body.items.item],
         page: {
           numOfRows: response.data.response.body.numOfRows,
           pageNo: response.data.response.body.pageNo,
           totalCount: response.data.response.body.totalCount
         }
-      } as any;
+      };
     }
+    return response;
   },
   error => Promise.reject(error)
 );
 
 // axios for react query
+export const fetchHospital = (
+  params: Pick<HospitalSearchRequestType, 'hmcNm'>
+): Promise<HospitalItemType> => {
+  if (!params.hmcNm) {
+    throw new Error('no search hmcNm');
+  }
+  return hospitalApi.get(HOSPITAL_SERVICE.SERVICE.SEARCH_ALL, { params }).then(res => {
+    if (Array.isArray(res.data.result) && res.data.result.length !== 1) {
+      throw new Error('no result or more result');
+    }
+    return res.data.result[0];
+  });
+};
+
 export const fetchHospitals = (
   params?: Partial<HospitalSearchRequestType & PagingRequestType>
 ): Promise<PaginationResponse<HospitalItemType[]>> => {
   if (params) {
     params = Object.fromEntries(Object.entries(params).filter(([, val]) => val !== ''));
   }
-  return hospitalApi.get(HOSPITAL_SERVICE.SERVICE.SEARCH_ALL, { params });
+  return hospitalApi.get(HOSPITAL_SERVICE.SERVICE.SEARCH_ALL, { params }).then(res => res.data);
 };
 export const fetchSidoList = (): Promise<SiDoCodeType[]> => {
   return hospitalApi
     .get(HOSPITAL_SERVICE.SERVICE.CODE_SIDO_LIST, {
       params: { numOfRows: 500 }
     })
-    .then(res => res.data);
+    .then(res => res.data.result);
 };
 export const fetchSiGunGuList = (params: SiGunGuRequestType): Promise<SiGunGuCodeType[]> => {
   return hospitalApi
     .get(HOSPITAL_SERVICE.SERVICE.CODE_SIGUNGU_LIST, {
       params: { ...params, numOfRows: 500 }
     })
-    .then(res => res.data);
+    .then(res => res.data.result);
 };
 export const fetchHospitalTypeList = (): Promise<HospitalCodeType[]> => {
   return hospitalApi
     .get(HOSPITAL_SERVICE.SERVICE.CODE_HOSPITAL_LIST, {
       params: { numOfRows: 500 }
     })
-    .then(res => res.data);
+    .then(res => res.data.result);
 };
 export const fetchCheckupTypeList = (): Promise<CheckupCodeType[]> => {
   return hospitalApi
     .get(HOSPITAL_SERVICE.SERVICE.CODE_CHECKUP_LIST, {
       params: { numOfRows: 500 }
     })
-    .then(res => res.data);
+    .then(res => res.data.result);
 };

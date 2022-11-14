@@ -3,7 +3,7 @@ import React, { ComponentPropsWithoutRef, useEffect, useRef } from 'react';
 export type MapGenerator = (mapOptions?: naver.maps.MapOptions) => naver.maps.Map;
 
 type NaverMapProps = {
-  onLoad?: (mapGenerator: MapGenerator) => void;
+  onLoad: (mapGenerator: MapGenerator) => void;
 } & Omit<ComponentPropsWithoutRef<'div'>, 'onLoad'>;
 
 export const NaverMap: React.FC<NaverMapProps> = props => {
@@ -22,7 +22,7 @@ export const NaverMap: React.FC<NaverMapProps> = props => {
     script.onload = () => {
       const mapGenerator = (mapOptions?: naver.maps.MapOptions) =>
         new naver.maps.Map(id, mapOptions ?? {});
-      if (onLoad) onLoad(mapGenerator);
+      onLoad(mapGenerator);
     };
 
     document.body.appendChild(script);

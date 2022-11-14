@@ -7,7 +7,7 @@ import {
   SiDoCodeType,
   SiGunGuCodeType
 } from 'app/data/api/hospitalAPI';
-import React, { SyntheticEvent } from 'react';
+import React from 'react';
 
 type HospitalSearchProps = FormProps & {
   siDoList: SiDoCodeType[] | undefined;
@@ -31,14 +31,6 @@ export const HospitalSearch: React.FC<HospitalSearchProps> = props => {
   } = props;
 
   // handler
-  const handleSido = (e: SyntheticEvent<HTMLSelectElement>) => {
-    onSelectSido(e);
-  };
-  const handleSiGunGu = (e: SyntheticEvent<HTMLSelectElement>) => {
-    if (onSelectSiGunGu) {
-      onSelectSiGunGu(e);
-    }
-  };
 
   // rendering
   return (
@@ -50,7 +42,7 @@ export const HospitalSearch: React.FC<HospitalSearchProps> = props => {
         <Answer.Select
           id="sidoList"
           name={HOSPITAL_SERVICE.PARAMS.CODE_SIDO.SIDO_CODE}
-          onChange={handleSido}
+          onChange={onSelectSido}
         >
           <Answer.Select.Option value="">시/도 선택</Answer.Select.Option>
           {siDoList?.map(sido => (
@@ -64,7 +56,7 @@ export const HospitalSearch: React.FC<HospitalSearchProps> = props => {
         <Answer.Select
           id="sigunguList"
           name={HOSPITAL_SERVICE.PARAMS.CODE_SIGUNGU.SIGUNGU_CODE}
-          onSelect={handleSiGunGu}
+          onSelect={onSelectSiGunGu}
         >
           <Answer.Select.Option value="">시/군/구 선택</Answer.Select.Option>
           {siGunGuList?.map(siGunGu => (
