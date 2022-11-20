@@ -1,7 +1,7 @@
 import { PropsWithChildren } from 'react';
 import { createPortal } from 'react-dom';
 
-export function usePortal(id = 'modal-root'): React.FC<PropsWithChildren<{}>> {
+export function usePortal(id = 'modal-root'): React.FC<PropsWithChildren> {
   const root = document.getElementById(id);
   if (root) {
     return ({ children }) => createPortal(children, root);

@@ -9,7 +9,7 @@ interface HospitalPageProps extends PageProps {
   hmcNm: string;
 }
 
-export const HospitalPage: React.FC<HospitalPageProps> = ({ hmcNm, ...rest }) => {
+export const HospitalPage: React.FC<HospitalPageProps> = ({ hmcNm }) => {
   const { data } = useQuery(['fetchHospital', hmcNm], () => fetchHospital({ hmcNm }));
 
   const {
@@ -30,27 +30,6 @@ export const HospitalPage: React.FC<HospitalPageProps> = ({ hmcNm, ...rest }) =>
     stmcaExmdChrgTypeCd,
     ykindnm
   } = data ?? {};
-
-  // bcExmdChrgTypeCd :"HAS_CANCER_BREAST"
-  // ccExmdChrgTypeCd :"HAS_CANCER_COLORECTAL"
-  // cvxcaExmdChrgTypeCd :"HAS_CANCER_CERVICAL"
-  // cxVl :"HOSPITAL_COORDS_X"
-  // cyVl :"HOSPITAL_COORDS_Y"
-  // exmdrFaxNo :"CHECKUP_CENTER_FAX_NUMBER"
-  // exmdrTelNo :"CHECKUP_CENTER_TEL_NUMBER"
-  // grenChrgTypeCd :"HAS_CHECKUP_NORMAL"
-  // hmcNm :"HOSPITAL_NAME"
-  // hmcNo :"HOSPITAL_ID"
-  // hmcTelNo :"HOSPITAL_TEL_NUMBER"
-  // ichkChrgTypeCd :"HAS_CHECKUP_INFANT"
-  // locAddr :"HOSPITAL_ADDRESS"
-  // locPostNo :"HOSPITAL_POST_NUMBER"
-  // lvcaExmdChrgTypeCd :"HAS_CANCER_LIVER"
-  // mchkChrgTypeCd :"HAS_CHECKUP_DENTAL"
-  // siDoCd :"HOSPITAL_SIDO_CODE"
-  // siGunGuCd :"HOSPITAL_SIGUNGU_CODE"
-  // stmcaExmdChrgTypeCd :"HAS_CANCER_STOMACH"
-  // ykindnm :"HOSPITAL_TYPE"
 
   const handleNaverMap = (mapGenerator: MapGenerator) => {
     const map = mapGenerator({
